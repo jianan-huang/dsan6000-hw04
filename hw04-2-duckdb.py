@@ -38,12 +38,19 @@ if __name__ == "__main__":
   # yearly_fatalities_duckdb.svg
   
   yearly_count_query = """
-  SELECT * FROM 's3://dsan6000-data/acled_events.parquet'
-  LIMIT 5;
+  SELECT year, CAST(SUM(fatalities) AS BIGINT) AS fatalities
+  FROM 's3://dsan6000-data/acled_events.parquet'
+  WHERE year BETWEEN 2018 AND 2024
+  GROUP BY year ORDER BY year;
   """
   result_df = con.execute(yearly_count_query).df()
   print(result_df)
-  
+  sns.lineplot(data=result_df, x='year', y='fatalities', marker='o')
+  plt.title("ACLED: Yearly Fatality Counts (DuckDB)")
+  plt.tight_layout()
+  os.makedirs('images', exist_ok=True)
+  plt.savefig('images/yearly_fatalities_duckdb.svg')
+
   memory_post = compute_memory_usage('outputs/hw04-2-duckdb-post.txt')
   print(f'{memory_post:.2f} MB used post-computation')
   memory_diff = memory_post - memory_pre
